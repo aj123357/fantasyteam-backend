@@ -223,11 +223,29 @@ const updateWinnersAmount = (winnerList) => {
       await updateDoc(userRef, {
         ...userData,
         amount:
-          parseInt(userData.amount) + parseInt(900000 / updatedWinners.length),
+          parseInt(userData.amount) + parseInt(900000 / winnerList.length),
       });
     }
     return;
   });
+};
+
+const addMatch = async (req, res) => {
+  const body = req.body;
+  try {
+    if (body.id === "" || body.id === undefined) {
+      let ref = await addDoc(collection(db, "Matches"), body);
+      const data = await updateDoc(ref, { id: ref.id });
+      console.log(ref);
+      return res.send(ref);
+    } else {
+      const matchRef = doc(db, "Matches", body.id);
+      await updateDoc(matchRef, body);
+      res.send(matchRef);
+    }
+  } catch (err) {
+    res.send("something went wrong", err);
+  }
 };
 
 module.exports = {
@@ -238,4 +256,5 @@ module.exports = {
   insertOrderDetails,
   fetchAllMatches,
   fetchAllWinners,
+  addMatch,
 };

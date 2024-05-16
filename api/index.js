@@ -10,6 +10,7 @@ const {
   fetchAllMatches,
   fetchUserService,
   insertOrderDetails,
+  addMatch,
   fetchAllWinners,
 } = require("../service/userService");
 
@@ -37,5 +38,5 @@ app.get("/v1/passwordResetEmail", passwordResetEmail);
 app.get("/v1/fetchUser", fetchUserService);
 app.get("/v1/fetchAllMatches", fetchAllMatches);
 app.get("/v1/fetchAllWinners", fetchAllWinners);
-
+app.post("/v1/addMatch", addMatch);
 module.exports = app;

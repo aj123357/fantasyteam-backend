@@ -12,7 +12,7 @@ const createUserService = async (serviceData) => {
       serviceData?.email,
       serviceData?.password
     );
-    console.log("useresponse", userResponse?.user);
+    console.log("ankush useresponse", userResponse?.user);
     console.log("accessToken", userResponse?.user?.accessToken);
 
     await auth.sendEmailVerification(userResponse?.user);
@@ -31,18 +31,20 @@ const createUserService = async (serviceData) => {
         accessToken: userResponse?.user?.accessToken,
         refreshToken: userResponse?.user?.refreshToken,
       };
-      console.log("userObj", userObj);
+      console.log("ankush userObj", userObj);
 
       const usersRef = await addDoc(collection(db, "FantasyUser"), userObj);
       // const usersRef = doc(db, "FantasyUser", ref.id)
       await updateDoc(usersRef, {
         id: usersRef.id,
       });
+      console.log("ankush userObj", { ...userObj, id: usersRef.id });
+
       return { ...userObj, id: usersRef.id };
     }
   } catch (e) {
     console.log("Something went wrong in ###createUserService###", e);
-    return res.status(500).send(e);
+    return undefined;
   }
 };
 
@@ -72,10 +74,17 @@ const LoginUserService = async (req, res) => {
     return res.status(200).send(data);
   } catch (e) {
     console.log("Something went wrong in ###LoginUserService###", e);
+    console.log("ankush not found");
+
     if (e.code === "auth/wrong-password" || e.code === "auth/invalid-email") {
       return res.status(401).send(e.code);
     } else {
-      return res.send(createUserService(serviceData));
+      const data = await createUserService(serviceData);
+      console.log("ankush", data);
+      if (data === undefined) {
+        res.status(500).send("Unable to create User");
+      }
+      return res.status(200).send(data);
     }
   }
 };
