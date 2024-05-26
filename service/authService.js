@@ -77,14 +77,16 @@ const LoginUserService = async (req, res) => {
     console.log("ankush not found");
 
     if (e.code === "auth/wrong-password" || e.code === "auth/invalid-email") {
+      console.log("ankush incorrect passord");
       return res.status(401).send(e.code);
     } else {
       const data = await createUserService(serviceData);
       console.log("ankush", data);
       if (data === undefined) {
-        res.status(500).send("Unable to create User");
+        return res.status(500).send("Unable to create User");
+      } else {
+        return res.status(200).send(data);
       }
-      return res.status(200).send(data);
     }
   }
 };

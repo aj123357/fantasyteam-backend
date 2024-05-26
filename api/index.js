@@ -13,6 +13,10 @@ const {
   addMatch,
   fetchAllWinners,
 } = require("../service/userService");
+const {
+  updatePlayers,
+  fetchMatchPlayers,
+} = require("../service/playerService");
 
 dotEnv.config();
 
@@ -39,4 +43,7 @@ app.get("/v1/fetchUser", fetchUserService);
 app.get("/v1/fetchAllMatches", fetchAllMatches);
 app.get("/v1/fetchAllWinners", fetchAllWinners);
 app.post("/v1/addMatch", addMatch);
+app.post("/v1/updatePlayers", updatePlayers);
+app.get("/v1/fetchMatchPlayers", fetchMatchPlayers);
+
 module.exports = app;

@@ -63,9 +63,9 @@ const fetchUserService = async (req, res) => {
 };
 
 const insertOrderDetails = async (req, res) => {
-  const { id, orderId, matchId } = req.query;
+  const { id, orderId, matchId, eventname } = req.query;
   const { playerSelected } = req.body;
-  console.log(req.query);
+  console.log("ankush", req.query, orderId, eventname);
   console.log(req.body);
   if (id == null || id === undefined) {
     res.status(400).send("Wrong User");
@@ -86,11 +86,13 @@ const insertOrderDetails = async (req, res) => {
           fantasyOrderId: orderId,
           playerSelected: playerSelected,
           matchId: matchId,
+          eventname: eventname,
           created_at: new Date(),
         };
         const updatedData = await updateDoc(ref, {
           transactions: [...data.transactions, newTransaction],
         });
+        console.log("ankush updatedData", updatedData);
 
         res.status(200).send({
           ...data,
