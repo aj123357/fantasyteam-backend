@@ -12,6 +12,7 @@ const {
   insertOrderDetails,
   addMatch,
   fetchAllWinners,
+  updateTopPerformers,
 } = require("../service/userService");
 const {
   updatePlayers,
@@ -45,5 +46,6 @@ app.get("/v1/fetchAllWinners", fetchAllWinners);
 app.post("/v1/addMatch", addMatch);
 app.post("/v1/updatePlayers", updatePlayers);
 app.get("/v1/fetchMatchPlayers", fetchMatchPlayers);
+app.put("/v1/updateTopPerformers", updateTopPerformers);
 
 module.exports = app;

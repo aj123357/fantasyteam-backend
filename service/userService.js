@@ -9,6 +9,7 @@ const {
   getDoc,
 } = require("firebase/firestore");
 const { addRandomUsernameWinners } = require("../utils/dbUtil");
+const { fetchEventWinner, eventsMapUtil } = require("../utils/gameUtil");
 
 const loginSignupUser = async (req, res) => {
   const body = req.query;
@@ -147,7 +148,7 @@ const fetchAllMatches = async (req, res) => {
 };
 
 const fetchAllWinners = async (req, res) => {
-  const { matchId } = req.query;
+  const { matchId, eventName } = req.query;
   try {
     console.log("document exists", matchId);
     let winnerList = [];
@@ -157,13 +158,18 @@ const fetchAllWinners = async (req, res) => {
     if (matchDoc.exists()) {
       console.log("match exists", matchDoc.data());
       const matchData = matchDoc.data();
-      if (matchData.winners !== undefined && matchData.winners.length > 0) {
-        res.status(200).send(matchData.winners);
+      if (
+        matchData.winners !== undefined &&
+        matchData.winners[eventName] !== undefined &&
+        matchData.winners[eventName].length > 0
+      ) {
+        res.status(200).send(matchData.winners[eventName]);
         return;
       }
       if (
         matchData.topPerformers !== undefined &&
-        matchData.topPerformers.length === 3
+        matchData.topPerformers[eventName] !== undefined &&
+        matchData.topPerformers[eventName].length > 0
       ) {
         const usersRef = collection(db, "FantasyUser");
         console.log("test1");
@@ -177,12 +183,16 @@ const fetchAllWinners = async (req, res) => {
           console.log("test2", transactions);
 
           transactions.forEach((transaction) => {
-            const userWins =
-              matchData.topPerformers[0] ===
-                transaction.playerSelected[0].name &&
-              matchData.topPerformers[1] ===
-                transaction.playerSelected[1].name &&
-              matchData.topPerformers[2] === transaction.playerSelected[2].name;
+            const userWins = fetchEventWinner(
+              matchData.topPerformers,
+              transaction
+            );
+            console.log("jindal userWinds", userWins);
+            // matchData.topPerformers[0] ===
+            //   transaction.playerSelected[0].name &&
+            // matchData.topPerformers[1] ===
+            //   transaction.playerSelected[1].name &&
+            // matchData.topPerformers[2] === transaction.playerSelected[2].name;
 
             if (userWins) {
               winnerList.push({
@@ -201,9 +211,11 @@ const fetchAllWinners = async (req, res) => {
     console.log("winnerlist", winnerList);
 
     const updatedWinners = addRandomUsernameWinners(winnerList);
-    await updateDoc(matchRef, { winners: updatedWinners });
+    await updateDoc(matchRef, {
+      winners: { ...matchRef.winners, [eventName]: updatedWinners },
+    });
 
-    updateWinnersAmount(winnerList);
+    updateWinnersAmount(winnerList, eventName);
     console.log("updatedWinners", updatedWinners, winnerList);
     res.status(200).send(updatedWinners);
   } catch (error) {
@@ -213,7 +225,9 @@ const fetchAllWinners = async (req, res) => {
   }
 };
 
-const updateWinnersAmount = (winnerList) => {
+const updateWinnersAmount = (winnerList, eventName) => {
+  const poolSize =
+    eventName === undefined ? 900000 : eventsMapUtil[eventName].prize_pool_size;
   winnerList.map(async (winner) => {
     if (winner.userId === undefined || winner.userId === null) {
       return;
@@ -225,7 +239,7 @@ const updateWinnersAmount = (winnerList) => {
       await updateDoc(userRef, {
         ...userData,
         amount:
-          parseInt(userData.amount) + parseInt(900000 / winnerList.length),
+          parseInt(userData.amount) + parseInt(poolSize / winnerList.length),
       });
     }
     return;
@@ -250,6 +264,29 @@ const addMatch = async (req, res) => {
   }
 };
 
+const updateTopPerformers = async (req, res) => {
+  try {
+    const { matchId, eventName } = req.query;
+    const eventResult = req.body;
+    console.log(eventName, req.body);
+    const matchRef = doc(db, "Matches", matchId);
+    const matchDoc = await getDoc(matchRef);
+
+    if (matchDoc.exists()) {
+      console.log("match exists", matchDoc.data());
+      const matchData = matchDoc.data();
+      await updateDoc(matchRef, {
+        topPerformers: { ...matchRef.topPerformers, [eventName]: eventResult },
+      });
+      res.send(matchData);
+    } else {
+      res.status(400).send("Incorrect Match id, Match doesnt exist");
+    }
+  } catch (err) {
+    res.status(500).send("something went wrong");
+  }
+};
+
 module.exports = {
   updateUser,
   loginSignupUser,
@@ -259,4 +296,5 @@ module.exports = {
   fetchAllMatches,
   fetchAllWinners,
   addMatch,
+  updateTopPerformers,
 };
